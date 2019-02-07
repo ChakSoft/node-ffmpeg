@@ -1,7 +1,7 @@
 {
 	"name": "ffmpeg",
 	"description": "Utility for managing video streams using ffmpeg",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"author": {
 		"name": "Damiano Ciarla",
 		"email": "damiano.ciarl@gmail.com"
