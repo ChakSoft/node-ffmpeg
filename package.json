@@ -17,9 +17,7 @@
 		"url": "https://github.com/ChakSoft/node-ffmpeg.git"
 	},
 	"main": "./index.js",
-	"dependencies": {
-		"when": "1.6.1"
-	},
+	"dependencies": {},
 	"publishConfig": {
 		"registry": "https://nexus.chaksoft.fr/repository/npm-all/"
 	},
