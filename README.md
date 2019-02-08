@@ -1,110 +1,96 @@
-node-ffmpeg
-===========
+# FFMpeg Node Binding
 
 [FFmpeg](http://ffmpeg.org/) module for [Node](http://nodejs.org/). This library provides a set of functions and utilities to abstract commands-line usage of ffmpeg. To use this library requires that ffmpeg is already installed (including all necessary encoding libraries like libmp3lame or libx264)
 
 You can install this module using [npm](http://github.com/isaacs/npm):
 
-	npm install ffmpeg
+    npm install ffmpeg
+
+## Notes
+
+This package has been forked from the original project `node-ffmpeg` created by @damianociarla.
+As it seems to be abandoned and not working any more with newer versions of ffmpeg, we decided to refactor the code to ECMAScript 2016 and make it work again.
 
 ## Usage
 
-To start using this library, you must include it in your project and then you can either use the callback function or through the [promise](https://github.com/cujojs/when) library:
+Here is an example of FFMpeg Node usage :
 
-	var ffmpeg = require('ffmpeg');
-	
-Use the callback function
-```js
-	try {
-		new ffmpeg('/path/to/your_movie.avi', function (err, video) {
-			if (!err) {
-				console.log('The video is ready to be processed');
-			} else {
-				console.log('Error: ' + err);
-			}
-		});
-	} catch (e) {
-		console.log(e.code);
-		console.log(e.msg);
-	}
-```	
-Use the approach with the library promise
-```js
-	try {
-		var process = new ffmpeg('/path/to/your_movie.avi');
-		process.then(function (video) {
-			console.log('The video is ready to be processed');
-		}, function (err) {
-			console.log('Error: ' + err);
-		});
-	} catch (e) {
-		console.log(e.code);
-		console.log(e.msg);
-	}
-```	
+    const getFFMpeg = require('ffmpeg')
+    getFFMpeg('/path/to/inputfile.avi')
+    	.then((video) => {
+    		return video
+    			.setVideoSize('?x720')
+    			.save('/path/to/outputfile.mp4')
+    	})
+    	.then(() => console.log('done'))
+    	.catch((err) => console.error(err))
+
 ## The video object
 
 Each time you create a new instance, this library provides a new object to retrieve the information of the video, the ffmpeg configuration and all methods to make the necessary conversions:
+
 ```js
-	try {
-		var process = new ffmpeg('/path/to/your_movie.avi');
-		process.then(function (video) {
-			// Video metadata
-			console.log(video.metadata);
-			// FFmpeg configuration
-			console.log(video.info_configuration);
-		}, function (err) {
-			console.log('Error: ' + err);
-		});
-	} catch (e) {
-		console.log(e.code);
-		console.log(e.msg);
-	}
-```	
+const getFFMpeg = require('ffmpeg')
+getFFMpeg('/path/to/input.avi').then(video => {
+  console.log(video.configuration)
+  console.log(video.metadata)
+})
+```
+
 ## Preset functions
 
 The video object contains a set of functions that allow you to perform specific operations independent of the settings for the conversion. In all the functions you can use the approach with the callback function or with the promise object
 
-### *video.fnExtractSoundToMP3 (destionationFileName, callback)*
+### _video.fnExtractSoundToMP3 (destionationFileName, callback)_
 
 This function extracts the audio stream of a video into an mp3 file
 
 Params:
 
-*	__destionationFileName__: Full path of the new file:
-	> /path/to/your_audio_file.mp3
+- **destionationFileName**: Full path of the new file:
 
-*	__callback__: *(optional)* If specified at the end of the process it will return the path of the new audio file:
-	> function (error, file)
+  > /path/to/your_audio_file.mp3
+
+- **callback**: _(optional)_ If specified at the end of the process it will return the path of the new audio file:
+  > function (error, file)
 
 Example:
+
 ```js
-	try {
-		var process = new ffmpeg('/path/to/your_movie.avi');
-		process.then(function (video) {
-			// Callback mode
-			video.fnExtractSoundToMP3('/path/to/your_audio_file.mp3', function (error, file) {
-				if (!error)
-					console.log('Audio file: ' + file);
-			});
-		}, function (err) {
-			console.log('Error: ' + err);
-		});
-	} catch (e) {
-		console.log(e.code);
-		console.log(e.msg);
-	}
+try {
+  var process = new ffmpeg('/path/to/your_movie.avi')
+  process.then(
+    function(video) {
+      // Callback mode
+      video.fnExtractSoundToMP3('/path/to/your_audio_file.mp3', function(
+        error,
+        file
+      ) {
+        if (!error) console.log('Audio file: ' + file)
+      })
+    },
+    function(err) {
+      console.log('Error: ' + err)
+    }
+  )
+} catch (e) {
+  console.log(e.code)
+  console.log(e.msg)
+}
 ```
-### *video.fnExtractFrameToJPG(destinationFolder, settings, callback)*
+
+### _video.fnExtractFrameToJPG(destinationFolder, settings, callback)_
 
 This function takes care of extracting one or more frames from the video that is being developed. At the end of the operation will return an array containing the list of extracted images
 
 Params:
 
-*	__destinationFolder__: Destination folder for the frames generated:
-	> /path/to/save_your_frames
+- **destinationFolder**: Destination folder for the frames generated:
 
-*	__settings__: *(optional)* Settings to change the default settings:
+  > /path/to/save_your_frames
+
+- **settings**: _(optional)_ Settings to change the default settings:
+
 ```js
 		{
 			start_time				: null		// Start time to recording
@@ -121,44 +107,56 @@ Params:
 		  , file_name				: null		// File name
 		}
 ```
-*	__callback__: *(optional)* If specified at the end of the process will be returned list of paths of frames created:
-	> function (error, files)
+
+- **callback**: _(optional)_ If specified at the end of the process will be returned list of paths of frames created:
+  > function (error, files)
 
 Example:
+
 ```js
-	try {
-		var process = new ffmpeg('/path/to/your_movie.avi');
-		process.then(function (video) {
-			// Callback mode
-			video.fnExtractFrameToJPG('/path/to/save_your_frames', {
-				frame_rate : 1,
-				number : 5,
-				file_name : 'my_frame_%t_%s'
-			}, function (error, files) {
-				if (!error)
-					console.log('Frames: ' + files);
-			});
-		}, function (err) {
-			console.log('Error: ' + err);
-		});
-	} catch (e) {
-		console.log(e.code);
-		console.log(e.msg);
-	}
+try {
+  var process = new ffmpeg('/path/to/your_movie.avi')
+  process.then(
+    function(video) {
+      // Callback mode
+      video.fnExtractFrameToJPG(
+        '/path/to/save_your_frames',
+        {
+          frame_rate: 1,
+          number: 5,
+          file_name: 'my_frame_%t_%s',
+        },
+        function(error, files) {
+          if (!error) console.log('Frames: ' + files)
+        }
+      )
+    },
+    function(err) {
+      console.log('Error: ' + err)
+    }
+  )
+} catch (e) {
+  console.log(e.code)
+  console.log(e.msg)
+}
 ```
-### *video.fnAddWatermark(watermarkPath, newFilepath, settings, callback)* 
+
+### _video.fnAddWatermark(watermarkPath, newFilepath, settings, callback)_
 
 This function takes care of adding a watermark to the video that is being developed. You can specify the exact position in which position the image
 
 Params:
 
-*	__watermarkPath__: The full path where the image is stored to add as watermark:
-	> /path/to/retrieve/watermark_file.png
+- **watermarkPath**: The full path where the image is stored to add as watermark:
 
-*	__newFilepath__: *(optional)* Name of the new video. If not specified will be created by the function:
-	> /path/to/save/your_file_video.mp4
+  > /path/to/retrieve/watermark_file.png
 
-*	__settings__: *(optional)* Settings to change the default settings:
+- **newFilepath**: _(optional)_ Name of the new video. If not specified will be created by the function:
+
+  > /path/to/save/your_file_video.mp4
+
+- **settings**: _(optional)_ Settings to change the default settings:
+
 ```js
 		{
 			position		: "SW"		// Position: NE NC NW SE SC SW C CE CW
@@ -168,145 +166,162 @@ Params:
 		  , margin_west		: null		// Margin west
 		};
 ```
-*	__callback__: *(optional)* If specified at the end of the process it will return the path of the new video containing the watermark:
-	> function (error, files)
+
+- **callback**: _(optional)_ If specified at the end of the process it will return the path of the new video containing the watermark:
+  > function (error, files)
 
 Example:
+
 ```js
-	try {
-		var process = new ffmpeg('/path/to/your_movie.avi');
-		process.then(function (video) {
-			// Callback mode
-			video.fnAddWatermark('/path/to/retrieve/watermark_file.png', '/path/to/save/your_file_video.mp4', {
-				position : 'SE'
-			}, function (error, file) {
-				if (!error)
-					console.log('New video file: ' + file);
-			});
-		}, function (err) {
-			console.log('Error: ' + err);
-		});
-	} catch (e) {
-		console.log(e.code);
-		console.log(e.msg);
-	}
+try {
+  var process = new ffmpeg('/path/to/your_movie.avi')
+  process.then(
+    function(video) {
+      // Callback mode
+      video.fnAddWatermark(
+        '/path/to/retrieve/watermark_file.png',
+        '/path/to/save/your_file_video.mp4',
+        {
+          position: 'SE',
+        },
+        function(error, file) {
+          if (!error) console.log('New video file: ' + file)
+        }
+      )
+    },
+    function(err) {
+      console.log('Error: ' + err)
+    }
+  )
+} catch (e) {
+  console.log(e.code)
+  console.log(e.msg)
+}
 ```
+
 ## Custom settings
 
 In addition to the possibility of using the preset, this library provides a variety of settings with which you can modify to your liking settings for converting video
 
-*	__video.setDisableAudio()__: Disables audio encoding
+- **video.setDisableAudio()**: Disables audio encoding
 
-*	__video.setDisableVideo()__: Disables video encoding
+- **video.setDisableVideo()**: Disables video encoding
 
-*	__video.setVideoFormat(format)__: Sets the new video format. Example:
-		
-		video.setVideoFormat('avi')
+- **video.setVideoFormat(format)**: Sets the new video format. Example:
+  video.setVideoFormat('avi')
 
-*	__video.setVideoCodec(codec)__: Sets the new audio codec. Example:
-	
-		video.setVideoCodec('mpeg4')
+- **video.setVideoCodec(codec)**: Sets the new audio codec. Example:
 
-*	__video.setVideoBitRate(bitrate)__: Sets the video bitrate in kb. Example:
-	
-		video.setVideoBitRate(1024)
+      video.setVideoCodec('mpeg4')
 
-*	__video.setVideoFrameRate(framerate)__: Sets the framerate of the video. Example:
-	
-		video.setVideoFrameRate(25)
+- **video.setVideoBitRate(bitrate)**: Sets the video bitrate in kb. Example:
 
-*	__video.setVideoStartTime(time)__: Sets the start time. You can specify the value in seconds or in date time format. Example:
-```js	
-		// Seconds
-		video.setVideoStartTime(13)
+      video.setVideoBitRate(1024)
 
-		// Date time format
-		video.setVideoStartTime('00:00:13')
+- **video.setVideoFrameRate(framerate)**: Sets the framerate of the video. Example:
+
+      video.setVideoFrameRate(25)
+
+- **video.setVideoStartTime(time)**: Sets the start time. You can specify the value in seconds or in date time format. Example:
+
+```js
+// Seconds
+video.setVideoStartTime(13)
+
+// Date time format
+video.setVideoStartTime('00:00:13')
 ```
-*	__video.setVideoDuration(duration)__: Sets the duration. You can specify the value in seconds or in date time format. Example:
-```js	
-		// Seconds
-		video.setVideoDuration(100)
 
-		// Date time format
-		video.setVideoDuration('00:01:40')
+- **video.setVideoDuration(duration)**: Sets the duration. You can specify the value in seconds or in date time format. Example:
+
+```js
+// Seconds
+video.setVideoDuration(100)
+
+// Date time format
+video.setVideoDuration('00:01:40')
 ```
-*	__video.setVideoAspectRatio(aspect)__: Sets the new aspetc ratio. You can specify the value with a number or with a string in the format 'xx:xx'. Example:
-```js	
-		// Value
-		video.setVideoAspectRatio(1.77)
 
-		// Format xx:xx
-		video.setVideoAspectRatio('16:9')
+- **video.setVideoAspectRatio(aspect)**: Sets the new aspetc ratio. You can specify the value with a number or with a string in the format 'xx:xx'. Example:
+
+```js
+// Value
+video.setVideoAspectRatio(1.77)
+
+// Format xx:xx
+video.setVideoAspectRatio('16:9')
 ```
-*	__video.setVideoSize(size, keepPixelAspectRatio, keepAspectRatio, paddingColor)__: Set the size of the video. This library can handle automatic resizing of the video. You can also apply a padding automatically keeping the original aspect ratio
-	
-	The following size formats are allowed to be passed to _size_:
 
-	> 640x480 _Fixed size (plain ffmpeg way)_
+- **video.setVideoSize(size, keepPixelAspectRatio, keepAspectRatio, paddingColor)**: Set the size of the video. This library can handle automatic resizing of the video. You can also apply a padding automatically keeping the original aspect ratio
 
-	> 50% _Percental resizing_
+  The following size formats are allowed to be passed to _size_:
 
-	> ?x480 _Fixed height, calculate width_
+  > 640x480 _Fixed size (plain ffmpeg way)_
 
-	> 640x? _Fixed width, calculate height_
+  > 50% _Percental resizing_
 
-	Example:
-```js	
-		// In this example, the video will be automatically resized to 640 pixels wide and will apply a padding white
-		video.setVideoSize('640x?', true, true, '#fff')
+  > ?x480 _Fixed height, calculate width_
 
-		// In this example, the video will be resized to 640x480 pixel, and if the aspect ratio is different the video will be stretched
-		video.setVideoSize('640x480', true, false)
+  > 640x? _Fixed width, calculate height_
+
+  Example:
+
+```js
+// In this example, the video will be automatically resized to 640 pixels wide and will apply a padding white
+video.setVideoSize('640x?', true, true, '#fff')
+
+// In this example, the video will be resized to 640x480 pixel, and if the aspect ratio is different the video will be stretched
+video.setVideoSize('640x480', true, false)
 ```
-*	__video.setAudioCodec(codec)__: Sets the new audio codec. Example:
-	
-		video.setAudioCodec('libfaac')
 
-*	__video.setAudioFrequency(frequency)__: Sets the audio sample frequency for audio outputs in kb. Example:
-	
-		video.setAudioFrequency(48)
+- **video.setAudioCodec(codec)**: Sets the new audio codec. Example:
 
-*	__video.setAudioChannels(channel)__: Sets the number of audio channels. Example:
-	
-		video.setAudioChannels(2)
+      video.setAudioCodec('libfaac')
 
-*	__video.setAudioBitRate(bitrate)__: Sets the audio bitrate in kb. Example:
-	
-		video.setAudioBitRate(128)
+- **video.setAudioFrequency(frequency)**: Sets the audio sample frequency for audio outputs in kb. Example:
 
-*	__video.setAudioQuality(quality)__: Sets the audio quality. Example:
-	
-		video.setAudioQuality(128)
+      video.setAudioFrequency(48)
 
-*	__video.setWatermark(watermarkPath, settings)__: Sets the watermark. You must specify the path where the image is stored to be inserted as watermark
-	
-	The possible settings (the values ​​shown are the default):
+- **video.setAudioChannels(channel)**: Sets the number of audio channels. Example:
 
-	*	**position : "SW"** 
-		
-		Position: NE NC NW SE SC SW C CE CW
+      video.setAudioChannels(2)
 
-	*	**margin_nord : null** 
+- **video.setAudioBitRate(bitrate)**: Sets the audio bitrate in kb. Example:
 
-		Margin nord (specify in pixel)
+      video.setAudioBitRate(128)
 
-	*	**margin_sud : null** 
+- **video.setAudioQuality(quality)**: Sets the audio quality. Example:
 
-		Margin sud (specify in pixel)
+      video.setAudioQuality(128)
 
-	*	**margin_east : null** 
+- **video.setWatermark(watermarkPath, settings)**: Sets the watermark. You must specify the path where the image is stored to be inserted as watermark
 
-		Margin east (specify in pixel)
+  The possible settings (the values ​​shown are the default):
 
-	*	**margin_west : null** 
+  - **position : "SW"**
 
-		Margin west (specify in pixel)
+    Position: NE NC NW SE SC SW C CE CW
 
-	Example:
+  - **margin_nord : null**
 
-		// In this example will be added the watermark at the bottom right of the video
-		video.setWatermark('/path/to/retrieve/watermark_file.png')
+    Margin nord (specify in pixel)
+
+  - **margin_sud : null**
+
+    Margin sud (specify in pixel)
+
+  - **margin_east : null**
+
+    Margin east (specify in pixel)
+
+  - **margin_west : null**
+
+    Margin west (specify in pixel)
+
+  Example:
+
+      // In this example will be added the watermark at the bottom right of the video
+      video.setWatermark('/path/to/retrieve/watermark_file.png')
 
 ## Add custom options
 
@@ -315,10 +330,12 @@ If the ffmpeg parameters are not present in the list of available function you c
 **video.addCommand(command, argument)**
 
 Example:
-```js	
-	// In this example will be changed the output to avi format
-	video.addCommand('-f', 'avi');
+
+```js
+// In this example will be changed the output to avi format
+video.addCommand('-f', 'avi')
 ```
+
 ## Save the file
 
 After setting the desired parameters have to start the conversion process. To do this you must call the function 'save'. This method takes as input the final destination of the file and optionally a callback function. If the function callback is not specified it's possible use the promise object.
@@ -326,25 +343,26 @@ After setting the desired parameters have to start the conversion process. To do
 **video.save(destionationFileName, callback)**
 
 Example:
-```js	
-	try {
-		var process = new ffmpeg('/path/to/your_movie.avi');
-		process.then(function (video) {
-			
-			video
-			.setVideoSize('640x?', true, true, '#fff')
-			.setAudioCodec('libfaac')
-			.setAudioChannels(2)
-			.save('/path/to/save/your_movie.avi', function (error, file) {
-				if (!error)
-					console.log('Video file: ' + file);
-			});
 
-		}, function (err) {
-			console.log('Error: ' + err);
-		});
-	} catch (e) {
-		console.log(e.code);
-		console.log(e.msg);
-	}
+```js
+try {
+  var process = new ffmpeg('/path/to/your_movie.avi')
+  process.then(
+    function(video) {
+      video
+        .setVideoSize('640x?', true, true, '#fff')
+        .setAudioCodec('libfaac')
+        .setAudioChannels(2)
+        .save('/path/to/save/your_movie.avi', function(error, file) {
+          if (!error) console.log('Video file: ' + file)
+        })
+    },
+    function(err) {
+      console.log('Error: ' + err)
+    }
+  )
+} catch (e) {
+  console.log(e.code)
+  console.log(e.msg)
+}
 ```
